@@ -33,36 +33,27 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'Murf AI',
-  pageTitle: 'Voice Agent Starter',
-  pageDescription: 'A voice agent powered by Murf Falcon — the fastest TTS API',
+  companyName: 'ArogyaSaathi',
+  pageTitle: 'ArogyaSaathi — AI Voice Health Companion for Bharat',
+  pageDescription: 'Real-time AI Voice Health Companion powered by LiveKit & Murf Falcon TTS',
 
   supportsChatInput: true,
   supportsVideoInput: true,
   supportsScreenShare: true,
   isPreConnectBufferEnabled: true,
 
-  logo: '/murf-logo.svg',
-  accent: '#6366F1',
-  logoDark: '/murf-logo-dark.svg',
-  accentDark: '#818cf8',
-  startButtonText: 'Start talking',
+  logo: '/images/arogyasaathi_logo.svg',
+  accent: '#0d9488',
+  logoDark: '/images/arogyasaathi_logo.svg',
+  accentDark: '#14b8a6',
+  startButtonText: 'Start Voice Consultation',
 
-  // optional: audio visualization configuration
-  // audioVisualizerType: 'bar',
-  // audioVisualizerColor: '#002cf2',
-  // audioVisualizerColorDark: '#1fd5f9',
-  // audioVisualizerColorShift: 0.3,
-  // audioVisualizerBarCount: 5,
-  // audioVisualizerType: 'radial',
-  // audioVisualizerRadialBarCount: 24,
-  // audioVisualizerRadialRadius: 100,
-  // audioVisualizerType: 'grid',
-  // audioVisualizerGridRowCount: 25,
-  // audioVisualizerGridColumnCount: 25,
-  // audioVisualizerType: 'wave',
-  // audioVisualizerWaveLineWidth: 3,
-  // audioVisualizerType: 'aura',
+  // Audio visualization configuration
+  audioVisualizerType: 'wave',
+  audioVisualizerColor: '#0d9488',
+  audioVisualizerColorDark: '#14b8a6',
+  audioVisualizerColorShift: 0.4,
+  audioVisualizerBarCount: 7,
 
   // agent dispatch configuration
   agentName: process.env.AGENT_NAME ?? undefined,

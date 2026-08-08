@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
+import { ConnectionState } from 'livekit-client';
 import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'motion/react';
 import { useSessionContext } from '@livekit/components-react';
@@ -23,8 +25,8 @@ const VIEW_MOTION_PROPS = {
   animate: 'visible',
   exit: 'hidden',
   transition: {
-    duration: 0.5,
-    ease: 'linear',
+    duration: 0.15,
+    ease: 'easeOut',
   },
 };
 
@@ -33,22 +35,48 @@ interface ViewControllerProps {
 }
 
 export function ViewController({ appConfig }: ViewControllerProps) {
-  const { isConnected, start } = useSessionContext();
+  const session = useSessionContext();
+  const { isConnected, start, connectionState } = session;
+  const isConnecting = connectionState === ConnectionState.Connecting;
+  const [isStarting, setIsStarting] = useState(false);
+  const showSessionView = isConnected || isConnecting || isStarting;
   const { resolvedTheme } = useTheme();
 
+  const wasConnectedRef = useRef(false);
+  const [wasEnded, setWasEnded] = useState(false);
+
+  useEffect(() => {
+    if (isConnected) {
+      wasConnectedRef.current = true;
+      setWasEnded(false);
+      setIsStarting(false);
+    } else if (wasConnectedRef.current && !isConnected && !isConnecting) {
+      setWasEnded(true);
+      setIsStarting(false);
+    }
+  }, [isConnected, isConnecting]);
+
+  const handleStartCall = () => {
+    setIsStarting(true);
+    setWasEnded(false);
+    start();
+  };
+
   return (
-    <AnimatePresence mode="wait">
-      {/* Welcome view */}
-      {!isConnected && (
+    <AnimatePresence mode="popLayout">
+      {/* Welcome view (Ready or Call Ended) */}
+      {!showSessionView && (
         <MotionWelcomeView
           key="welcome"
           {...VIEW_MOTION_PROPS}
           startButtonText={appConfig.startButtonText}
-          onStartCall={start}
+          isConnecting={isConnecting}
+          wasEnded={wasEnded}
+          onStartCall={handleStartCall}
         />
       )}
-      {/* Session view */}
-      {isConnected && (
+      {/* Active Session view (Connecting, Listening, Speaking, Active conversation) */}
+      {showSessionView && (
         <MotionSessionView
           key="session-view"
           {...VIEW_MOTION_PROPS}
@@ -75,3 +103,4 @@ export function ViewController({ appConfig }: ViewControllerProps) {
     </AnimatePresence>
   );
 }
+

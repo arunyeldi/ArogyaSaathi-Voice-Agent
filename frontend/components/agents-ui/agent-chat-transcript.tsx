@@ -57,13 +57,19 @@ export function AgentChatTranscript({
         {messages.map((receivedMessage) => {
           const { id, timestamp, from, message } = receivedMessage;
           const locale = navigator?.language ?? 'en-US';
-          const messageOrigin = from?.isLocal ? 'user' : 'assistant';
+          const isUser = from?.isLocal;
+          const messageOrigin = isUser ? 'user' : 'assistant';
           const time = new Date(timestamp);
-          const title = time.toLocaleTimeString(locale, { timeStyle: 'full' });
+          const timeString = time.toLocaleTimeString(locale, { timeStyle: 'short' });
 
           return (
-            <Message key={id} title={title} from={messageOrigin}>
-              <MessageContent>
+            <Message key={id} title={timeString} from={messageOrigin} className="my-2">
+              <div className={`mb-1 text-xs font-bold tracking-wide flex items-center gap-1.5 ${isUser ? 'justify-end text-teal-600 dark:text-teal-400' : 'justify-start text-emerald-600 dark:text-emerald-400'}`}>
+                {!isUser && <span className="size-2 rounded-full bg-emerald-500 inline-block animate-pulse" />}
+                <span>{isUser ? 'You' : 'ArogyaSaathi'}</span>
+                <span className="text-[10px] font-normal text-muted-foreground">({timeString})</span>
+              </div>
+              <MessageContent className={isUser ? 'bg-muted/60 dark:bg-muted/40 border-0 rounded-2xl px-4 py-2.5 text-foreground max-w-[85%]' : 'bg-transparent border-0 p-0 text-foreground/95 leading-relaxed text-sm md:text-base max-w-full font-normal'}>
                 <MessageResponse>{message}</MessageResponse>
               </MessageContent>
             </Message>

@@ -2,9 +2,9 @@
 
 import { type ComponentProps, useEffect, useRef, useState } from 'react';
 import { Track } from 'livekit-client';
-import { Loader, MessageSquareTextIcon, SendHorizontal } from 'lucide-react';
+import { Loader, MessageSquareTextIcon, SendHorizontal, Mic, MicOff, PhoneOff, ChevronDown } from 'lucide-react';
 import { type MotionProps, motion } from 'motion/react';
-import { useChat } from '@livekit/components-react';
+import { useChat, useMediaDeviceSelect } from '@livekit/components-react';
 import { AgentDisconnectButton } from '@/components/agents-ui/agent-disconnect-button';
 import { AgentTrackControl } from '@/components/agents-ui/agent-track-control';
 import {
@@ -13,6 +13,13 @@ import {
 } from '@/components/agents-ui/agent-track-toggle';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   type UseInputControlsProps,
   useInputControls,
@@ -284,121 +291,119 @@ export function AgentControlBar({
     return null;
   }
 
+  const { devices: audioDevices, activeDeviceId: activeAudioDeviceId, setActiveMediaDevice: setActiveAudioDevice } = useMediaDeviceSelect({ kind: 'audioinput' });
+
   return (
     <div
       aria-label="Voice assistant controls"
       className={cn(
-        'bg-background border-input/50 dark:border-muted flex flex-col border p-3 drop-shadow-md/3',
-        variant === 'livekit' ? 'rounded-[31px]' : 'rounded-lg',
+        'bg-card/95 border border-border/80 rounded-full shadow-2xl backdrop-blur-2xl p-2 md:px-4 flex items-center justify-between gap-3 w-full',
         className
       )}
       {...props}
     >
-      <motion.div
-        {...MOTION_PROPS}
-        inert={!(isChatOpen || isChatOpenUncontrolled)}
-        animate={isChatOpen || isChatOpenUncontrolled ? 'visible' : 'hidden'}
-        className="border-input/50 flex w-full items-start overflow-hidden border-b"
-      >
-        <AgentChatInput
-          chatOpen={isChatOpen || isChatOpenUncontrolled}
-          onSend={handleSendMessage}
-          className={cn(variant === 'livekit' && '[&_button]:rounded-full')}
+      {/* Sleek Inline Text Input for Type or Voice */}
+      <div className="flex flex-1 items-center gap-2 bg-muted/50 dark:bg-muted/30 rounded-full px-3.5 py-1.5 border border-border/50 focus-within:border-teal-500/60 focus-within:ring-2 focus-within:ring-teal-500/20 transition-all">
+        <input
+          type="text"
+          placeholder="Ask ArogyaSaathi anything..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+              handleSendMessage(e.currentTarget.value.trim());
+              e.currentTarget.value = '';
+            }
+          }}
+          className="w-full bg-transparent text-xs md:text-sm font-medium text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
         />
-      </motion.div>
+        <Button
+          size="icon-xs"
+          variant="ghost"
+          onClick={(e) => {
+            const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+            if (input && input.value.trim()) {
+              handleSendMessage(input.value.trim());
+              input.value = '';
+            }
+          }}
+          className="group rounded-full text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 hover:scale-110 active:scale-95 transition-all cursor-pointer"
+          aria-label="Send message"
+        >
+          <SendHorizontal className="size-4 group-hover:translate-x-0.5 transition-transform" />
+        </Button>
+      </div>
 
-      <div className="flex gap-1">
-        <div className="flex grow gap-1">
-          {/* Toggle Microphone */}
-          {visibleControls.microphone && (
-            <AgentTrackControl
-              variant={variant === 'outline' ? 'outline' : 'default'}
-              kind="audioinput"
-              aria-label="Toggle microphone"
-              source={Track.Source.Microphone}
-              pressed={microphoneToggle.enabled}
+      {/* Action Controls Side-by-Side */}
+      <div className="flex items-center gap-2">
+        {/* Toggle Microphone + Device Selector Group - Executive Dual Pill */}
+        {visibleControls.microphone && (
+          <div className="flex items-center rounded-full border border-teal-500/40 bg-teal-500/15 p-0.5 shadow-sm transition-all hover:border-teal-500/60">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => microphoneToggle.toggle()}
               disabled={microphoneToggle.pending}
-              audioTrack={microphoneTrack}
-              onPressedChange={microphoneToggle.toggle}
-              onActiveDeviceChange={handleAudioDeviceChange}
-              onMediaDeviceError={handleMicrophoneDeviceSelectError}
               className={cn(
-                variant === 'livekit' && [
-                  LK_TOGGLE_VARIANT_1,
-                  'rounded-full [&_button:first-child]:rounded-l-full [&_button:last-child]:rounded-r-full',
-                ]
+                "size-9 rounded-full shrink-0 transition-all flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95",
+                microphoneToggle.enabled
+                  ? "bg-teal-500/30 text-teal-300 hover:bg-teal-500/45"
+                  : "bg-rose-500/30 text-rose-300 hover:bg-rose-500/45"
               )}
-            />
-          )}
-
-          {/* Toggle Camera */}
-          {visibleControls.camera && (
-            <AgentTrackControl
-              variant={variant === 'outline' ? 'outline' : 'default'}
-              kind="videoinput"
-              aria-label="Toggle camera"
-              source={Track.Source.Camera}
-              pressed={cameraToggle.enabled}
-              pending={cameraToggle.pending}
-              disabled={cameraToggle.pending}
-              onPressedChange={cameraToggle.toggle}
-              onMediaDeviceError={handleCameraDeviceSelectError}
-              onActiveDeviceChange={handleVideoDeviceChange}
-              className={cn(
-                variant === 'livekit' && [
-                  LK_TOGGLE_VARIANT_1,
-                  'rounded-full [&_button:first-child]:rounded-l-full [&_button:last-child]:rounded-r-full',
-                ]
-              )}
-            />
-          )}
-
-          {/* Toggle Screen Share */}
-          {visibleControls.screenShare && (
-            <AgentTrackToggle
-              variant={variant === 'outline' ? 'outline' : 'default'}
-              aria-label="Toggle screen share"
-              source={Track.Source.ScreenShare}
-              pressed={screenShareToggle.enabled}
-              disabled={screenShareToggle.pending}
-              onPressedChange={screenShareToggle.toggle}
-              className={cn(variant === 'livekit' && [LK_TOGGLE_VARIANT_2, 'rounded-full'])}
-            />
-          )}
-
-          {/* Toggle Transcript */}
-          {visibleControls.chat && (
-            <Toggle
-              variant={variant === 'outline' ? 'outline' : 'default'}
-              pressed={isChatOpen || isChatOpenUncontrolled}
-              aria-label="Toggle transcript"
-              onPressedChange={(state) => {
-                if (!onIsChatOpenChange) setIsChatOpenUncontrolled(state);
-                else onIsChatOpenChange(state);
-              }}
-              className={agentTrackToggleVariants({
-                variant: variant === 'outline' ? 'outline' : 'default',
-                className: cn(variant === 'livekit' && [LK_TOGGLE_VARIANT_2, 'rounded-full']),
-              })}
+              aria-label={microphoneToggle.enabled ? "Mute microphone" : "Unmute microphone"}
             >
-              <MessageSquareTextIcon />
-            </Toggle>
-          )}
-        </div>
+              {microphoneToggle.enabled ? <Mic className="size-4" /> : <MicOff className="size-4" />}
+            </Button>
 
-        {/* Disconnect */}
+            {/* Microphone Device Selection Dropdown Trigger - Exactly ONE Arrow */}
+            {audioDevices.length > 0 && (
+              <Select value={activeAudioDeviceId} onValueChange={(deviceId) => setActiveAudioDevice(deviceId)}>
+                <SelectTrigger className="h-9 w-6 border-0 bg-transparent text-teal-300 hover:text-white hover:bg-teal-500/30 rounded-r-full p-0 flex items-center justify-center cursor-pointer focus:ring-0 shadow-none">
+                  <SelectValue placeholder="" />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end" className="bg-popover/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl p-1.5 z-50 min-w-[14rem]">
+                  {audioDevices.map((device) => (
+                    <SelectItem
+                      key={device.deviceId}
+                      value={device.deviceId}
+                      className="text-xs font-medium cursor-pointer rounded-xl hover:bg-teal-500/10 focus:bg-teal-500/15 py-2"
+                    >
+                      {device.label || `Microphone (${device.deviceId.slice(0, 5)})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
+
+        {/* Toggle Transcript */}
+        {visibleControls.chat && (
+          <Toggle
+            variant="default"
+            pressed={isChatOpen || isChatOpenUncontrolled}
+            aria-label="Toggle transcript"
+            onPressedChange={(state) => {
+              if (!onIsChatOpenChange) setIsChatOpenUncontrolled(state);
+              else onIsChatOpenChange(state);
+            }}
+            className="rounded-full bg-muted/60 hover:bg-muted text-foreground p-2.5 transition-all cursor-pointer hover:scale-105 active:scale-95"
+          >
+            <MessageSquareTextIcon className="size-4" />
+          </Toggle>
+        )}
+
+        {/* Premium Animated END CONVERSATION Button */}
         {visibleControls.leave && (
-          <AgentDisconnectButton
+          <Button
             onClick={onDisconnect}
             disabled={!isConnected}
-            className={cn(
-              variant === 'livekit' &&
-                'bg-destructive/10 dark:bg-destructive/10 text-destructive hover:bg-destructive/20 dark:hover:bg-destructive/20 focus:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/4 rounded-full font-mono text-xs font-bold tracking-wider'
-            )}
+            className="group relative overflow-hidden rounded-full bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white font-extrabold text-xs tracking-wider uppercase px-4 md:px-5 py-2.5 shadow-lg shadow-rose-600/30 hover:shadow-rose-600/50 hover:scale-[1.04] active:scale-95 transition-all duration-300 border border-rose-400/40 cursor-pointer flex items-center gap-2"
+            aria-label="End conversation"
           >
-            <span className="hidden md:inline">END CALL</span>
-            <span className="inline md:hidden">END</span>
-          </AgentDisconnectButton>
+            <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full pointer-events-none" />
+            <PhoneOff className="size-4 text-white group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" />
+            <span className="relative z-10 hidden sm:inline">END CONVERSATION</span>
+            <span className="relative z-10 inline sm:hidden">END</span>
+          </Button>
         )}
       </div>
     </div>

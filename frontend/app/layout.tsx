@@ -71,29 +71,18 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           enableSystem
           disableTransitionOnChange
         >
-          <header className="fixed top-0 left-0 z-50 hidden w-full flex-row justify-between p-6 md:flex">
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://livekit.io"
-              className="scale-100 transition-transform duration-300 hover:scale-110"
-            >
+          <header className="fixed top-0 left-0 z-50 hidden w-full flex-row justify-between items-center p-6 md:flex pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logo} alt={`${companyName} Logo`} className="block size-6 dark:hidden" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={logoDark ?? logo}
-                alt={`${companyName} Logo`}
-                className="hidden size-6 dark:block"
-              />
-            </a>
-            <span className="text-foreground font-mono text-xs font-bold tracking-wider uppercase">
+              <img src={logo} alt={`${companyName} Logo`} className="h-12 md:h-14 w-auto object-contain drop-shadow-lg hover:scale-105 transition-transform duration-300" />
+            </div>
+            <span className="pointer-events-auto text-muted-foreground font-mono text-xs font-semibold tracking-wider uppercase bg-card/60 border border-border/40 backdrop-blur-md px-3 py-1.5 rounded-full">
               Built with{' '}
               <a
                 target="_blank"
                 rel="noopener noreferrer"
                 href="https://docs.livekit.io/agents"
-                className="underline underline-offset-4"
+                className="underline underline-offset-4 text-teal-400"
               >
                 LiveKit Agents
               </a>
