@@ -18,7 +18,9 @@ async def test_offers_assistance() -> None:
         await session.start(Assistant())
 
         # Run an agent turn following the user's greeting
-        result = await session.run(user_input="Namaste! I'm ArogyaSaathi, your multilingual AI Health Companion for Bharat. Today I'm here to demonstrate my voice capabilities. Over the next ten days, I'll continue learning new healthcare skills to better assist everyone. How can I help you today?")
+        result = await session.run(
+            user_input="Namaste! I'm ArogyaSaathi, your multilingual AI Health Companion for Bharat. Today I'm here to demonstrate my voice capabilities. Over the next ten days, I'll continue learning new healthcare skills to better assist everyone. How can I help you today?"
+        )
 
         # Evaluate the agent's response for friendliness
         await (

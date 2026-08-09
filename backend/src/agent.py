@@ -8,44 +8,139 @@ from livekit.agents import (
     AgentSession,
     JobContext,
     JobProcess,
+    RunContext,
     cli,
-    inference,
-    tokenize,
+    function_tool,
     room_io,
+    tokenize,
 )
-from livekit.plugins import murf, silero, google, deepgram, noise_cancellation
+from livekit.plugins import deepgram, google, murf, noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
+from memory.service import MemoryService
 from prompts.system_prompt import SYSTEM_PROMPT
 
 logger = logging.getLogger("agent")
 
 load_dotenv(".env.local")
 
-# Change this prompt to change what your voice agent does.
-# See README.md for example prompts (customer support, language tutor, receptionist).
+# Initialize SQLite Database & Memory Service
+MemoryService.initialize()
+
 SYSTEM_PROMPT = SYSTEM_PROMPT
+
 
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(instructions=SYSTEM_PROMPT)
 
-    # To add tools, use the @function_tool decorator.
-    # Here's an example that adds a simple weather tool.
-    # You also have to add `from livekit.agents import function_tool, RunContext` to the top of this file
-    # @function_tool
-    # async def lookup_weather(self, context: RunContext, location: str):
-    #     """Use this tool to look up current weather information in the given location.
-    #
-    #     If the location is not supported by the weather service, the tool will indicate this. You must tell the user the location's weather is unavailable.
-    #
-    #     Args:
-    #         location: The location to look up weather information for (e.g. city name)
-    #     """
-    #
-    #     logger.info(f"Looking up weather for {location}")
-    #
-    #     return "sunny with a temperature of 70 degrees."
+    @function_tool
+    async def lookup_user(self, context: RunContext, name_or_id: str) -> str:
+        """Look up whether a caller has been here before and retrieve their saved profile.
+
+        WHEN TO CALL: Call this tool IMMEDIATELY whenever the caller says their name for the first time
+        in the conversation (e.g. "My name is Ramesh", "I am Meera", "This is Raj",
+        "Do you remember me?", "Call me Lakshmi").
+        Do NOT wait. Call this before responding to the caller.
+
+        Args:
+            name_or_id: The caller's name exactly as they said it (e.g. 'Lakshmi', 'Ramesh', 'Meera').
+        """
+        search_term = name_or_id.strip()
+        logger.info(f"Memory lookup requested for: {search_term}")
+
+        if not search_term:
+            return "No identifier provided for lookup."
+
+        profile = MemoryService.lookup_user(search_term)
+
+        if not profile:
+            logger.info(f"User not found: '{search_term}'")
+            return f"No previous record found for '{search_term}'. Treat them as a first-time caller."
+
+        logger.info(f"User found: '{profile.name}'")
+        return (
+            f"FOUND CALLER PROFILE:\n"
+            f"Name: {profile.name}\n"
+            f"Language Preference: {profile.language_preference}\n"
+            f"Age Band: {profile.age_band}\n"
+            f"Facts: {profile.facts}\n"
+            f"Last Interaction: {profile.last_interaction}"
+        )
+
+    @function_tool
+    async def save_user_memory(
+        self,
+        context: RunContext,
+        name: str,
+        user_consent_given: bool,
+        language_preference: str = "Hindi/English",
+        age_band: str = "Unspecified",
+        ongoing_conditions: str = "None mentioned",
+        last_triage_outcome: str = "General Consultation",
+        preferred_register: str = "simple explanations",
+        user_id: str = "",
+    ) -> str:
+        """Save the caller's profile to persistent memory after they give explicit consent.
+
+        WHEN TO CALL: After you have asked the caller if they would like to be remembered and
+        they clearly said YES or AGREE. Pass user_consent_given=True only on explicit agreement.
+        If the caller says NO or is unsure, call this with user_consent_given=False (no data will be saved).
+
+        HEALTH ACCESS RULE: Never save detailed medical notes, diagnoses, specific medicines, or ID numbers.
+        Only save: name, language preference, age band, a brief general condition, brief advice summary.
+
+        Args:
+            name: The caller's name (e.g. 'Meera', 'Lakshmi', 'Ramesh').
+            user_consent_given: True only if the caller explicitly said yes to being remembered.
+            language_preference: Language the caller prefers (e.g. 'Hindi', 'English', 'Hinglish').
+            age_band: Age band (e.g. '60+', '30-45', 'Young Adult'). Use 'Unspecified' if unknown.
+            ongoing_conditions: Brief general condition only (e.g. 'mild fever', 'cough'). Not detailed notes.
+            last_triage_outcome: Brief summary of advice given (e.g. 'Advised rest and warm fluids').
+            preferred_register: How they like information (e.g. 'simple explanations').
+            user_id: Optional stable user ID from the session.
+        """
+        logger.info(
+            f"Memory save requested for '{name}' (Consent: {user_consent_given})"
+        )
+
+        facts = {
+            "ongoing_conditions": ongoing_conditions,
+            "last_triage_outcome": last_triage_outcome,
+            "preferred_register": preferred_register,
+        }
+
+        success, message = MemoryService.save_user_memory(
+            user_id=user_id,
+            name=name,
+            user_consent_given=user_consent_given,
+            language_preference=language_preference,
+            age_band=age_band,
+            facts=facts,
+        )
+
+        if success:
+            logger.info(f"Memory saved for '{name}'")
+        else:
+            logger.warning(f"Memory save failed for '{name}': {message}")
+
+        return message
+
+    @function_tool
+    async def forget_user(self, context: RunContext, name_or_id: str) -> str:
+        """Delete the caller's persistent memory profile ('Right to be Forgotten').
+
+        Use this tool when a caller requests to delete their data or be forgotten.
+
+        Args:
+            name_or_id: The caller's name or ID to erase (e.g. 'Meera', 'Lakshmi').
+        """
+        logger.info(f"Memory deletion requested for: {name_or_id}")
+        success, message = MemoryService.forget_user(name_or_id)
+
+        if success:
+            logger.info(f"Memory deleted for '{name_or_id}'")
+        return message
 
 
 server = AgentServer()
@@ -68,55 +163,23 @@ async def my_agent(ctx: JobContext):
 
     # Set up a voice AI pipeline using Murf Falcon, Gemini, Deepgram, and the LiveKit turn detector
     session = AgentSession(
-        # Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
-        # See all available models at https://docs.livekit.io/agents/models/stt/
         stt=deepgram.STT(
             model="nova-3",
-            language="multi", 
-            smart_format=True, 
-            punctuate=True,
-            filler_words=False,
+            language="multi",  # streaming multilingual: English, Hindi, Spanish, French, German, Portuguese
         ),
-        # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
-        # See all available models at https://docs.livekit.io/agents/models/llm/
         llm=google.LLM(
-                model="gemini-3.5-flash-lite",
-                temperature=0.2,
-            ),
-        # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
-        # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
+            model="gemini-3.5-flash-lite",
+        ),
         tts=murf.TTS(
-                voice="Anisha", 
-                style="Conversation",
-                tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
-                text_pacing=True
-            ),
-        # VAD and turn detection are used to determine when the user is speaking and when the agent should respond
-        # See more at https://docs.livekit.io/agents/build/turns
+            voice="Anisha",  # do not hardcode the locale key
+            style="Conversation",
+            tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
+            text_pacing=True,
+        ),
         turn_detection=MultilingualModel(),
         vad=ctx.proc.userdata["vad"],
-        # allow the LLM to generate a response while waiting for the end of turn
-        # See more at https://docs.livekit.io/agents/build/audio/#preemptive-generation
         preemptive_generation=True,
     )
-
-    # To use a realtime model instead of a voice pipeline, use the following session setup instead.
-    # (Note: This is for the OpenAI Realtime API. For other providers, see https://docs.livekit.io/agents/models/realtime/))
-    # 1. Install livekit-agents[openai]
-    # 2. Set OPENAI_API_KEY in .env.local
-    # 3. Add `from livekit.plugins import openai` to the top of this file
-    # 4. Use the following session setup instead of the version above
-    # session = AgentSession(
-    #     llm=openai.realtime.RealtimeModel(voice="marin")
-    # )
-
-    # # Add a virtual avatar to the session, if desired
-    # # For other providers, see https://docs.livekit.io/agents/models/avatar/
-    # avatar = hedra.AvatarSession(
-    #   avatar_id="...",  # See https://docs.livekit.io/agents/models/avatar/plugins/hedra
-    # )
-    # # Start the avatar and wait for it to join
-    # await avatar.start(session, room=ctx.room)
 
     # Start the session, which initializes the voice pipeline and warms up the models
     await session.start(

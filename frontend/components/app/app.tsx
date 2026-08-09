@@ -28,9 +28,17 @@ interface AppProps {
 
 export function App({ appConfig }: AppProps) {
   const tokenSource = useMemo(() => {
-    return typeof process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT === 'string'
-      ? getSandboxTokenSource(appConfig)
-      : TokenSource.endpoint('/api/token');
+    if (typeof window !== 'undefined') {
+      let persistentId = localStorage.getItem('arogya_user_id');
+      if (!persistentId) {
+        persistentId = `user_${Math.floor(1000 + Math.random() * 9000)}`;
+        localStorage.setItem('arogya_user_id', persistentId);
+      }
+      return TokenSource.endpoint('/api/token', {
+        body: JSON.stringify({ user_id: persistentId }),
+      });
+    }
+    return TokenSource.endpoint('/api/token');
   }, [appConfig]);
 
   const session = useSession(

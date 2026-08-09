@@ -1,11 +1,12 @@
+from .conversation_memory import CONVERSATION_MEMORY
+from .greeting import GREETING
+from .guardrails import GUARDRAILS
 from .identity import IDENTITY
-from .objectives import OBJECTIVES
 from .knowledge import KNOWLEDGE
 from .language import LANGUAGE
-from .guardrails import GUARDRAILS
+from .memory_instructions import MEMORY_INSTRUCTIONS
+from .objectives import OBJECTIVES
 from .style import STYLE
-from .greeting import GREETING
-from .conversation_memory import CONVERSATION_MEMORY
 
 SYSTEM_PROMPT = f"""
 ========================
@@ -55,4 +56,10 @@ CONVERSATION MEMORY
 ==========================
 
 {CONVERSATION_MEMORY}
+
+==========================
+CALLER MEMORY & PRIVACY
+==========================
+
+{MEMORY_INSTRUCTIONS}
 """
