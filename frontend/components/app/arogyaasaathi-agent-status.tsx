@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Loader2, Mic, Volume2, Brain, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Loader2, Mic, Volume2, Brain, AlertCircle, Activity } from 'lucide-react';
 
 interface AgentStatusProps {
   state?: string;
@@ -19,6 +19,14 @@ export function ArogyaSaathiAgentStatus({ state, onStartAgain }: AgentStatusProp
           spin: true,
           bgClass: 'bg-amber-50 text-amber-900 border-amber-300 dark:bg-amber-950/80 dark:text-amber-200 dark:border-amber-700',
           dotClass: 'bg-amber-500 animate-ping',
+        };
+      case 'checking':
+        return {
+          label: 'Checking health guidance...',
+          Icon: Activity,
+          spin: true,
+          bgClass: 'bg-blue-50 text-blue-900 border-blue-300 dark:bg-blue-950/80 dark:text-blue-200 dark:border-blue-700',
+          dotClass: 'bg-blue-500 animate-ping',
         };
       case 'listening':
         return {

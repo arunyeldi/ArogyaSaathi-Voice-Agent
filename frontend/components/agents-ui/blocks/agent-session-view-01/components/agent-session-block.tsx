@@ -17,6 +17,7 @@ import { TileLayout } from './tile-view';
 import { ArogyaSaathiAgentStatus } from '@/components/app/arogyaasaathi-agent-status';
 import { ArogyaSaathiMicError } from '@/components/app/arogyaasaathi-microphone-error';
 import { ArogyaSaathiVoiceOrb } from '@/components/app/arogyaasaathi-voice-orb';
+import { ArogyaSaathiToolResultCard } from '@/components/app/arogyaasaathi-tool-result-card';
 
 const MotionMessage = motion.create(Shimmer);
 
@@ -302,6 +303,9 @@ export function AgentSessionView_01({
 
         {/* SECTION 2: Live Conversation Transcript Panel (Right / Bottom) */}
         <div className="w-full md:w-7/12 flex-1 h-full min-h-[300px] rounded-2xl border border-border/80 bg-card/50 backdrop-blur-xl p-4 shadow-xl flex flex-col justify-between overflow-hidden">
+          {/* Tool Result Card Overlay */}
+          <ArogyaSaathiToolResultCard />
+
           <div className="flex items-center justify-between border-b border-border/40 pb-2 mb-2">
             <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
               <span>💬 Live Consultation Transcript</span>

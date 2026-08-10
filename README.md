@@ -229,6 +229,78 @@ Murf Falcon and LiveKit handle audio format internally. For advanced options, se
 
 ---
 
+---
+
+## Day 5 — Tools
+
+ArogyaSaathi incorporates **Day 5 — Domain Tools Intelligence** using a conservative, transparent symptom urgency triage tool: `assess_symptom_urgency`.
+
+### Tool Signature: `assess_symptom_urgency`
+
+```python
+async def assess_symptom_urgency(
+    context: RunContext,
+    symptoms: str,
+    duration: str | None = None,
+    age_band: str | None = None,
+    severity: str | None = None,
+    caller_name: str | None = None,
+) -> str
+```
+
+### When It Runs
+- Automatically invoked when a caller describes health symptoms, asks whether they need to see a doctor/hospital, or inquires about symptom urgency.
+- The LLM automatically recognizes the need for domain tool execution without requiring the user to explicitly request a tool call.
+
+### Data Source & Provenance
+- **Source**: `ArogyaSaathi local prototype triage rules v1.0`
+- **Data Status**: `local` (deterministic prototype ruleset)
+- **Timestamping**: ISO-8601 UTC timestamp metadata is attached to every assessment payload (`data_as_of`).
+
+### Failure Behavior & Resilience
+- If tool execution encounters a failure or timeout, the tool returns a graceful error payload (`status: "error"`, `triage_level: "UNAVAILABLE"`).
+- The agent **never fabricates** unavailable data. It speaks a natural fallback: *"I am currently unable to reach our automated health assessment service, so I don't want to guess. If your symptoms are severe, please visit a healthcare provider right away."*
+- The Next.js frontend visually displays a **SERVICE TEMPORARILY UNAVAILABLE** card state.
+
+### Healthcare Guardrails
+- **No Diagnosis**: Does not diagnose specific diseases or conditions.
+- **No Prescriptions**: Never recommends prescription drugs, antibiotics, or specific medication dosages.
+- **Red-Flag Escalation**: Chest pain, acute difficulty breathing, sudden paralysis, or severe bleeding trigger immediate `EMERGENCY` escalation to seek hospital or 108 emergency care.
+
+### System Architecture Diagram
+
+```mermaid
+flowchart TD
+    User([🎙️ User Speaks]) -->|Audio Stream| STT[Deepgram STT nova-3]
+    STT -->|Transcribed Text| Agent[LiveKit Assistant Agent]
+    
+    Agent -->|Caller Lookup / Consent| MemTool[Day 4 Memory Tool]
+    MemTool <-->|Read / Write| DB[(SQLite DB arogyasaathi.db)]
+    
+    Agent -->|Symptom Urgency Request| TriageTool[Day 5 assess_symptom_urgency]
+    MemTool -.->|Chained Age Band Context| TriageTool
+    TriageTool -->|Urgency Payload| Agent
+    
+    TriageTool -->|Real-time Data Packet topic: arogya_tool| UI[Next.js Frontend Tool Card UI]
+    
+    Agent -->|Natural Speech Prompt| LLM[Google Gemini 3.5 Flash Lite]
+    LLM -->|Speech Text| TTS[Murf Falcon TTS Anisha]
+    TTS -->|Audio Stream| UserHear[🔊 User Hears Natural Guidance]
+
+    style User fill:#334155,stroke:#94a3b8,color:#fff
+    style STT fill:#1e40af,stroke:#60a5fa,color:#fff
+    style Agent fill:#0f766e,stroke:#2dd4bf,color:#fff
+    style MemTool fill:#4338ca,stroke:#818cf8,color:#fff
+    style TriageTool fill:#b45309,stroke:#fbbf24,color:#fff
+    style DB fill:#374151,stroke:#9ca3af,color:#fff
+    style UI fill:#0369a1,stroke:#38bdf8,color:#fff
+    style LLM fill:#6b21a8,stroke:#c084fc,color:#fff
+    style TTS fill:#047857,stroke:#34d399,color:#fff
+    style UserHear fill:#334155,stroke:#94a3b8,color:#fff
+```
+
+---
+
 ## Project Structure
 
 ```

@@ -7,6 +7,7 @@ from .language import LANGUAGE
 from .memory_instructions import MEMORY_INSTRUCTIONS
 from .objectives import OBJECTIVES
 from .style import STYLE
+from .tool_instructions import TOOL_INSTRUCTIONS
 
 SYSTEM_PROMPT = f"""
 ========================
@@ -62,4 +63,10 @@ CALLER MEMORY & PRIVACY
 ==========================
 
 {MEMORY_INSTRUCTIONS}
+
+==========================
+AUTOMATED DOMAIN TOOLS
+==========================
+
+{TOOL_INSTRUCTIONS}
 """
