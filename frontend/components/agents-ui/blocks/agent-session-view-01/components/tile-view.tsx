@@ -106,7 +106,7 @@ export function TileLayout({
   const videoHeight = agentVideoTrack?.publication.dimensions?.height ?? 0;
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
+    <div className="relative flex h-full w-full items-center justify-center">
       <div className="relative mx-auto h-full w-full px-2">
         <div className={cn(tileViewClassNames.grid)}>
           {/* Agent */}
@@ -130,7 +130,9 @@ export function TileLayout({
                     ...ANIMATION_TRANSITION,
                     delay: animationDelay,
                   }}
-                  className={cn('relative aspect-square h-[140px] md:h-[180px] flex items-center justify-center')}
+                  className={cn(
+                    'relative flex aspect-square h-[140px] items-center justify-center md:h-[180px]'
+                  )}
                 >
                   <AudioVisualizer
                     key="audio-visualizer"

@@ -1,23 +1,23 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, type MotionProps, motion } from 'motion/react';
-import { useAgent, useSessionContext, useSessionMessages } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { AgentChatTranscript } from '@/components/agents-ui/agent-chat-transcript';
+import { AnimatePresence, type MotionProps, motion } from 'motion/react';
 import { toast as sonnerToast } from 'sonner';
+import { useAgent, useSessionContext, useSessionMessages } from '@livekit/components-react';
+import { AgentChatTranscript } from '@/components/agents-ui/agent-chat-transcript';
 import {
   AgentControlBar,
   type AgentControlBarControls,
 } from '@/components/agents-ui/agent-control-bar';
 import { Shimmer } from '@/components/ai-elements/shimmer';
-import { cn } from '@/lib/shadcn/utils';
-import { Button } from '@/components/ui/button';
-import { TileLayout } from './tile-view';
 import { ArogyaSaathiAgentStatus } from '@/components/app/arogyaasaathi-agent-status';
 import { ArogyaSaathiMicError } from '@/components/app/arogyaasaathi-microphone-error';
-import { ArogyaSaathiVoiceOrb } from '@/components/app/arogyaasaathi-voice-orb';
 import { ArogyaSaathiToolResultCard } from '@/components/app/arogyaasaathi-tool-result-card';
+import { ArogyaSaathiVoiceOrb } from '@/components/app/arogyaasaathi-voice-orb';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/shadcn/utils';
+import { TileLayout } from './tile-view';
 
 const MotionMessage = motion.create(Shimmer);
 
@@ -155,7 +155,9 @@ export function AgentSessionView_01({
   const session = useSessionContext();
   const { messages } = useSessionMessages(session);
   const [chatOpen, setChatOpen] = useState(true);
-  const [micError, setMicError] = useState<{ visible: boolean; message?: string }>({ visible: false });
+  const [micError, setMicError] = useState<{ visible: boolean; message?: string }>({
+    visible: false,
+  });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { state: agentState } = useAgent();
 
@@ -172,19 +174,28 @@ export function AgentSessionView_01({
     try {
       if (err?.source === Track.Source.Microphone) {
         const isPermissionDenied =
-          err.error?.name === 'NotAllowedError' || /permission|denied/i.test(err.error?.message ?? '');
+          err.error?.name === 'NotAllowedError' ||
+          /permission|denied/i.test(err.error?.message ?? '');
         if (isPermissionDenied) {
-          setMicError({ visible: true, message: 'Microphone access is blocked. Please allow microphone access in your browser settings.' });
+          setMicError({
+            visible: true,
+            message:
+              'Microphone access is blocked. Please allow microphone access in your browser settings.',
+          });
           // eslint-disable-next-line no-console
           console.warn('Microphone permission denied:', err.error?.message ?? err.error);
           return;
         }
 
-        sonnerToast.error(`Microphone error: ${err.error?.message ?? String(err.error)}`, { duration: 8_000 });
+        sonnerToast.error(`Microphone error: ${err.error?.message ?? String(err.error)}`, {
+          duration: 8_000,
+        });
         return;
       }
 
-      sonnerToast.error(`Device error: ${err.error?.message ?? String(err.error)}`, { duration: 8_000 });
+      sonnerToast.error(`Device error: ${err.error?.message ?? String(err.error)}`, {
+        duration: 8_000,
+      });
     } catch (e) {
       sonnerToast.error('An unknown device error occurred.');
     }
@@ -199,22 +210,24 @@ export function AgentSessionView_01({
     }
   }, [messages]);
 
-
   return (
     <section
       ref={ref}
-      className={cn('bg-background relative z-10 h-full w-full overflow-hidden flex flex-col justify-between p-4 md:p-6 gap-4', className)}
+      className={cn(
+        'bg-background relative z-10 flex h-full w-full flex-col justify-between gap-4 overflow-hidden p-4 md:p-6',
+        className
+      )}
       {...props}
     >
       {/* Top Header Bar for Active Health Consultation */}
-      <header className="relative z-40 w-full max-w-5xl mx-auto flex items-center justify-between gap-2 border-b border-border/40 pb-3">
+      <header className="border-border/40 relative z-40 mx-auto flex w-full max-w-5xl items-center justify-between gap-2 border-b pb-3">
         {/* Brand Badge */}
-        <div className="flex items-center gap-2 rounded-full bg-teal-500/10 border border-teal-500/20 px-3.5 py-1.5 backdrop-blur-md">
+        <div className="flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3.5 py-1.5 backdrop-blur-md">
           <span className="relative flex size-2.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
           </span>
-          <span className="text-xs font-bold text-teal-700 dark:text-teal-300 tracking-wide">
+          <span className="text-xs font-bold tracking-wide text-teal-700 dark:text-teal-300">
             ArogyaSaathi Live Session
           </span>
         </div>
@@ -225,8 +238,8 @@ export function AgentSessionView_01({
         </div>
 
         {/* Right Encrypted Security Badge */}
-        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-muted/40 border border-border/50 px-3 py-1.5 rounded-full">
-          <span className="size-2 rounded-full bg-emerald-500 inline-block" />
+        <div className="text-muted-foreground bg-muted/40 border-border/50 hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium sm:flex">
+          <span className="inline-block size-2 rounded-full bg-emerald-500" />
           <span>256-bit Encrypted</span>
         </div>
       </header>
@@ -247,7 +260,8 @@ export function AgentSessionView_01({
             } catch (err: any) {
               setMicError({
                 visible: true,
-                message: 'Microphone access is still blocked. Please check your browser settings and allow microphone access.',
+                message:
+                  'Microphone access is still blocked. Please check your browser settings and allow microphone access.',
               });
               // eslint-disable-next-line no-console
               console.warn('Retry mic failed', err);
@@ -257,25 +271,27 @@ export function AgentSessionView_01({
       )}
 
       {/* Main Content Workspace: Divided into 2 Distinct Non-Overlapping Sections */}
-      <main className="relative z-20 flex-1 w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-4 overflow-hidden">
+      <main className="relative z-20 mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 overflow-hidden md:flex-row">
         {/* SECTION 1: Voice AI Visualizer Stage Card (Left / Top) */}
-        <div className="w-full md:w-5/12 h-60 md:h-full rounded-2xl border border-teal-500/30 bg-card/60 backdrop-blur-xl p-4 shadow-xl flex flex-col items-center justify-between relative overflow-hidden">
-          <div className="w-full flex items-center justify-between text-xs text-muted-foreground border-b border-border/30 pb-2">
-            <span className="font-semibold text-teal-500 flex items-center gap-1">
-              <span className="size-2 rounded-full bg-teal-500 animate-pulse" />
+        <div className="bg-card/60 relative flex h-60 w-full flex-col items-center justify-between overflow-hidden rounded-2xl border border-teal-500/30 p-4 shadow-xl backdrop-blur-xl md:h-full md:w-5/12">
+          <div className="text-muted-foreground border-border/30 flex w-full items-center justify-between border-b pb-2 text-xs">
+            <span className="flex items-center gap-1 font-semibold text-teal-500">
+              <span className="size-2 animate-pulse rounded-full bg-teal-500" />
               Voice Stage
             </span>
-            <span className="text-[10px] font-mono text-muted-foreground">Murf Falcon + LiveKit</span>
+            <span className="text-muted-foreground font-mono text-[10px]">
+              Murf Falcon + LiveKit
+            </span>
           </div>
 
           {/* Reactive Visualizer Stage */}
-          <div className="relative w-full flex-1 flex items-center justify-center my-2">
+          <div className="relative my-2 flex w-full flex-1 items-center justify-center">
             <div className="relative flex items-center justify-center">
               {/* Background Glowing Aura Ring */}
-              <div className="absolute size-44 md:size-52 rounded-full bg-gradient-to-r from-teal-500/25 via-emerald-500/15 to-teal-600/25 blur-2xl animate-pulse" />
+              <div className="absolute size-44 animate-pulse rounded-full bg-gradient-to-r from-teal-500/25 via-emerald-500/15 to-teal-600/25 blur-2xl md:size-52" />
 
               {/* Clean Unobstructed Audio Wave Visualizer Stage */}
-              <div className="relative z-10 size-48 md:size-56 flex items-center justify-center">
+              <div className="relative z-10 flex size-48 items-center justify-center md:size-56">
                 <TileLayout
                   chatOpen={chatOpen}
                   audioVisualizerType={audioVisualizerType ?? 'aura'}
@@ -292,7 +308,7 @@ export function AgentSessionView_01({
             </div>
           </div>
 
-          <p className="text-[11px] font-medium text-muted-foreground text-center">
+          <p className="text-muted-foreground text-center text-[11px] font-medium">
             {agentState === 'speaking'
               ? '🔊 ArogyaSaathi is speaking...'
               : agentState === 'listening'
@@ -302,19 +318,21 @@ export function AgentSessionView_01({
         </div>
 
         {/* SECTION 2: Live Conversation Transcript Panel (Right / Bottom) */}
-        <div className="w-full md:w-7/12 flex-1 h-full min-h-[300px] rounded-2xl border border-border/80 bg-card/50 backdrop-blur-xl p-4 shadow-xl flex flex-col justify-between overflow-hidden">
+        <div className="border-border/80 bg-card/50 flex h-full min-h-[300px] w-full flex-1 flex-col justify-between overflow-hidden rounded-2xl border p-4 shadow-xl backdrop-blur-xl md:w-7/12">
           {/* Tool Result Card Overlay */}
           <ArogyaSaathiToolResultCard />
 
-          <div className="flex items-center justify-between border-b border-border/40 pb-2 mb-2">
-            <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+          <div className="border-border/40 mb-2 flex items-center justify-between border-b pb-2">
+            <h3 className="text-foreground flex items-center gap-1.5 text-xs font-bold">
               <span>💬 Live Consultation Transcript</span>
             </h3>
-            <span className="text-[10px] text-muted-foreground font-mono">Real-time voice stream</span>
+            <span className="text-muted-foreground font-mono text-[10px]">
+              Real-time voice stream
+            </span>
           </div>
 
           {/* Transcript Scroll Area */}
-          <div className="flex-1 w-full overflow-y-auto pr-1">
+          <div className="w-full flex-1 overflow-y-auto pr-1">
             <AnimatePresence>
               {chatOpen && (
                 <motion.div
@@ -334,7 +352,7 @@ export function AgentSessionView_01({
       </main>
 
       {/* Bottom Floating Control Dock */}
-      <footer className="relative z-50 w-full max-w-3xl mx-auto pt-2">
+      <footer className="relative z-50 mx-auto w-full max-w-3xl pt-2">
         {/* Pre-connect guidance buffer message */}
         {isPreConnectBufferEnabled && (
           <AnimatePresence>
@@ -352,7 +370,7 @@ export function AgentSessionView_01({
           </AnimatePresence>
         )}
 
-        <div className="bg-card/90 border border-border rounded-full shadow-2xl backdrop-blur-xl p-2 md:px-4">
+        <div className="bg-card/90 border-border rounded-full border p-2 shadow-2xl backdrop-blur-xl md:px-4">
           <AgentControlBar
             variant="livekit"
             controls={controls}
@@ -367,5 +385,3 @@ export function AgentSessionView_01({
     </section>
   );
 }
-
-

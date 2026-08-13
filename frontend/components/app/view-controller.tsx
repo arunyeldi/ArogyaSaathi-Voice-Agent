@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ConnectionState } from 'livekit-client';
 import { useTheme } from 'next-themes';
+import { ConnectionState } from 'livekit-client';
 import { AnimatePresence, motion } from 'motion/react';
 import { useSessionContext } from '@livekit/components-react';
 import type { AppConfig } from '@/app-config';
@@ -103,4 +103,3 @@ export function ViewController({ appConfig }: ViewControllerProps) {
     </AnimatePresence>
   );
 }
-

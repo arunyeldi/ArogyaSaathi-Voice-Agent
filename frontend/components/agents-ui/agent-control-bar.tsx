@@ -2,7 +2,15 @@
 
 import { type ComponentProps, useEffect, useRef, useState } from 'react';
 import { Track } from 'livekit-client';
-import { Loader, MessageSquareTextIcon, SendHorizontal, Mic, MicOff, PhoneOff, ChevronDown } from 'lucide-react';
+import {
+  ChevronDown,
+  Loader,
+  MessageSquareTextIcon,
+  Mic,
+  MicOff,
+  PhoneOff,
+  SendHorizontal,
+} from 'lucide-react';
 import { type MotionProps, motion } from 'motion/react';
 import { useChat, useMediaDeviceSelect } from '@livekit/components-react';
 import { AgentDisconnectButton } from '@/components/agents-ui/agent-disconnect-button';
@@ -12,7 +20,6 @@ import {
   agentTrackToggleVariants,
 } from '@/components/agents-ui/agent-track-toggle';
 import { Button } from '@/components/ui/button';
-import { Toggle } from '@/components/ui/toggle';
 import {
   Select,
   SelectContent,
@@ -20,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Toggle } from '@/components/ui/toggle';
 import {
   type UseInputControlsProps,
   useInputControls,
@@ -291,19 +299,23 @@ export function AgentControlBar({
     return null;
   }
 
-  const { devices: audioDevices, activeDeviceId: activeAudioDeviceId, setActiveMediaDevice: setActiveAudioDevice } = useMediaDeviceSelect({ kind: 'audioinput' });
+  const {
+    devices: audioDevices,
+    activeDeviceId: activeAudioDeviceId,
+    setActiveMediaDevice: setActiveAudioDevice,
+  } = useMediaDeviceSelect({ kind: 'audioinput' });
 
   return (
     <div
       aria-label="Voice assistant controls"
       className={cn(
-        'bg-card/95 border border-border/80 rounded-full shadow-2xl backdrop-blur-2xl p-2 md:px-4 flex items-center justify-between gap-3 w-full',
+        'bg-card/95 border-border/80 flex w-full items-center justify-between gap-3 rounded-full border p-2 shadow-2xl backdrop-blur-2xl md:px-4',
         className
       )}
       {...props}
     >
       {/* Sleek Inline Text Input for Type or Voice */}
-      <div className="flex flex-1 items-center gap-2 bg-muted/50 dark:bg-muted/30 rounded-full px-3.5 py-1.5 border border-border/50 focus-within:border-teal-500/60 focus-within:ring-2 focus-within:ring-teal-500/20 transition-all">
+      <div className="bg-muted/50 dark:bg-muted/30 border-border/50 flex flex-1 items-center gap-2 rounded-full border px-3.5 py-1.5 transition-all focus-within:border-teal-500/60 focus-within:ring-2 focus-within:ring-teal-500/20">
         <input
           type="text"
           placeholder="Ask ArogyaSaathi anything..."
@@ -313,7 +325,7 @@ export function AgentControlBar({
               e.currentTarget.value = '';
             }
           }}
-          className="w-full bg-transparent text-xs md:text-sm font-medium text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+          className="text-foreground placeholder:text-muted-foreground/70 w-full bg-transparent text-xs font-medium focus:outline-none md:text-sm"
         />
         <Button
           size="icon-xs"
@@ -325,10 +337,10 @@ export function AgentControlBar({
               input.value = '';
             }
           }}
-          className="group rounded-full text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 hover:scale-110 active:scale-95 transition-all cursor-pointer"
+          className="group cursor-pointer rounded-full text-teal-600 transition-all hover:scale-110 hover:bg-teal-500/20 active:scale-95 dark:text-teal-400"
           aria-label="Send message"
         >
-          <SendHorizontal className="size-4 group-hover:translate-x-0.5 transition-transform" />
+          <SendHorizontal className="size-4 transition-transform group-hover:translate-x-0.5" />
         </Button>
       </div>
 
@@ -343,28 +355,39 @@ export function AgentControlBar({
               onClick={() => microphoneToggle.toggle()}
               disabled={microphoneToggle.pending}
               className={cn(
-                "size-9 rounded-full shrink-0 transition-all flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95",
+                'flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all hover:scale-105 active:scale-95',
                 microphoneToggle.enabled
-                  ? "bg-teal-500/30 text-teal-300 hover:bg-teal-500/45"
-                  : "bg-rose-500/30 text-rose-300 hover:bg-rose-500/45"
+                  ? 'bg-teal-500/30 text-teal-300 hover:bg-teal-500/45'
+                  : 'bg-rose-500/30 text-rose-300 hover:bg-rose-500/45'
               )}
-              aria-label={microphoneToggle.enabled ? "Mute microphone" : "Unmute microphone"}
+              aria-label={microphoneToggle.enabled ? 'Mute microphone' : 'Unmute microphone'}
             >
-              {microphoneToggle.enabled ? <Mic className="size-4" /> : <MicOff className="size-4" />}
+              {microphoneToggle.enabled ? (
+                <Mic className="size-4" />
+              ) : (
+                <MicOff className="size-4" />
+              )}
             </Button>
 
             {/* Microphone Device Selection Dropdown Trigger - Exactly ONE Arrow */}
             {audioDevices.length > 0 && (
-              <Select value={activeAudioDeviceId} onValueChange={(deviceId) => setActiveAudioDevice(deviceId)}>
-                <SelectTrigger className="h-9 w-6 border-0 bg-transparent text-teal-300 hover:text-white hover:bg-teal-500/30 rounded-r-full p-0 flex items-center justify-center cursor-pointer focus:ring-0 shadow-none">
+              <Select
+                value={activeAudioDeviceId}
+                onValueChange={(deviceId) => setActiveAudioDevice(deviceId)}
+              >
+                <SelectTrigger className="flex h-9 w-6 cursor-pointer items-center justify-center rounded-r-full border-0 bg-transparent p-0 text-teal-300 shadow-none hover:bg-teal-500/30 hover:text-white focus:ring-0">
                   <SelectValue placeholder="" />
                 </SelectTrigger>
-                <SelectContent position="popper" align="end" className="bg-popover/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl p-1.5 z-50 min-w-[14rem]">
+                <SelectContent
+                  position="popper"
+                  align="end"
+                  className="bg-popover/95 border-border z-50 min-w-[14rem] rounded-2xl border p-1.5 shadow-2xl backdrop-blur-xl"
+                >
                   {audioDevices.map((device) => (
                     <SelectItem
                       key={device.deviceId}
                       value={device.deviceId}
-                      className="text-xs font-medium cursor-pointer rounded-xl hover:bg-teal-500/10 focus:bg-teal-500/15 py-2"
+                      className="cursor-pointer rounded-xl py-2 text-xs font-medium hover:bg-teal-500/10 focus:bg-teal-500/15"
                     >
                       {device.label || `Microphone (${device.deviceId.slice(0, 5)})`}
                     </SelectItem>
@@ -385,7 +408,7 @@ export function AgentControlBar({
               if (!onIsChatOpenChange) setIsChatOpenUncontrolled(state);
               else onIsChatOpenChange(state);
             }}
-            className="rounded-full bg-muted/60 hover:bg-muted text-foreground p-2.5 transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="bg-muted/60 hover:bg-muted text-foreground cursor-pointer rounded-full p-2.5 transition-all hover:scale-105 active:scale-95"
           >
             <MessageSquareTextIcon className="size-4" />
           </Toggle>
@@ -396,11 +419,11 @@ export function AgentControlBar({
           <Button
             onClick={onDisconnect}
             disabled={!isConnected}
-            className="group relative overflow-hidden rounded-full bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white font-extrabold text-xs tracking-wider uppercase px-4 md:px-5 py-2.5 shadow-lg shadow-rose-600/30 hover:shadow-rose-600/50 hover:scale-[1.04] active:scale-95 transition-all duration-300 border border-rose-400/40 cursor-pointer flex items-center gap-2"
+            className="group relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-full border border-rose-400/40 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 px-4 py-2.5 text-xs font-extrabold tracking-wider text-white uppercase shadow-lg shadow-rose-600/30 transition-all duration-300 hover:scale-[1.04] hover:shadow-rose-600/50 active:scale-95 md:px-5"
             aria-label="End conversation"
           >
-            <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full pointer-events-none" />
-            <PhoneOff className="size-4 text-white group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" />
+            <span className="pointer-events-none absolute inset-0 rounded-full bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <PhoneOff className="size-4 text-white transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
             <span className="relative z-10 hidden sm:inline">END CONVERSATION</span>
             <span className="relative z-10 inline sm:hidden">END</span>
           </Button>

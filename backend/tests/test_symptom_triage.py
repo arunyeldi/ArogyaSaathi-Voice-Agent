@@ -18,9 +18,7 @@ def test_routine_symptom_triage():
 
 def test_concerning_symptom_triage():
     """Test 2: Concerning symptoms (fever for 4 days) return URGENT or SOON."""
-    res = assess_symptom_urgency_local(
-        symptoms="fever and weakness", duration="4 days"
-    )
+    res = assess_symptom_urgency_local(symptoms="fever and weakness", duration="4 days")
     assert res["status"] == "success"
     assert res["triage_level"] in ["SOON", "URGENT"]
 

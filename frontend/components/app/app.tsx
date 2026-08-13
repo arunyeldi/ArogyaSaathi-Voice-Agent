@@ -34,12 +34,18 @@ export function App({ appConfig }: AppProps) {
         persistentId = `user_${Math.floor(1000 + Math.random() * 9000)}`;
         localStorage.setItem('arogya_user_id', persistentId);
       }
-      return TokenSource.endpoint('/api/token', {
-        body: JSON.stringify({ user_id: persistentId }),
+      return TokenSource.custom(async () => {
+        const res = await fetch('/api/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: persistentId }),
+        });
+        const data = await res.json();
+        return data;
       });
     }
     return TokenSource.endpoint('/api/token');
-  }, [appConfig]);
+  }, []);
 
   const session = useSession(
     tokenSource,
@@ -49,7 +55,7 @@ export function App({ appConfig }: AppProps) {
   return (
     <AgentSessionProvider session={session}>
       <AppSetup />
-      <main className="min-h-svh w-full flex flex-col items-center justify-start overflow-y-auto">
+      <main className="flex min-h-svh w-full flex-col items-center justify-start overflow-y-auto">
         <ViewController appConfig={appConfig} />
       </main>
       <StartAudioButton label="Start Audio" />

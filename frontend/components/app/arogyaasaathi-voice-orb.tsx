@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HeartPulse, Mic, Volume2, Brain, Loader2 } from 'lucide-react';
+import { Brain, HeartPulse, Loader2, Mic, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/shadcn/utils';
 
 interface VoiceOrbProps {
@@ -44,7 +44,7 @@ export function ArogyaSaathiVoiceOrb({ state = 'ready', className, size = 'md' }
           Icon: Mic,
           iconClass: 'animate-pulse text-white',
           pulseRingClass: 'animate-ping duration-750 bg-emerald-400/30',
-          subtext: "Listening — speak naturally",
+          subtext: 'Listening — speak naturally',
         };
       case 'thinking':
         return {
@@ -89,7 +89,8 @@ export function ArogyaSaathiVoiceOrb({ state = 'ready', className, size = 'md' }
     }
   };
 
-  const { glowColor, borderColor, bgGradient, Icon, iconClass, pulseRingClass, subtext } = getStateConfig();
+  const { glowColor, borderColor, bgGradient, Icon, iconClass, pulseRingClass, subtext } =
+    getStateConfig();
 
   return (
     <div className={cn('flex flex-col items-center justify-center text-center', className)}>
@@ -98,7 +99,7 @@ export function ArogyaSaathiVoiceOrb({ state = 'ready', className, size = 'md' }
         {/* Outer Ripple 1 */}
         <div
           className={cn(
-            'absolute inset-0 rounded-full blur-xl opacity-75 transition-all duration-700 bg-gradient-to-r',
+            'absolute inset-0 rounded-full bg-gradient-to-r opacity-75 blur-xl transition-all duration-700',
             glowColor
           )}
         />
@@ -114,7 +115,7 @@ export function ArogyaSaathiVoiceOrb({ state = 'ready', className, size = 'md' }
         {/* Outer Ring Border */}
         <div
           className={cn(
-            'absolute -inset-1.5 rounded-full border-2 transition-all duration-500 shadow-lg',
+            'absolute -inset-1.5 rounded-full border-2 shadow-lg transition-all duration-500',
             borderColor
           )}
         />
@@ -131,12 +132,18 @@ export function ArogyaSaathiVoiceOrb({ state = 'ready', className, size = 'md' }
           <div className="absolute inset-1 rounded-full bg-white/10 blur-xs" />
 
           {/* Icon */}
-          <Icon className={cn('relative z-10 transition-all duration-300 drop-shadow-md', iconSizes, iconClass)} />
+          <Icon
+            className={cn(
+              'relative z-10 drop-shadow-md transition-all duration-300',
+              iconSizes,
+              iconClass
+            )}
+          />
         </div>
       </div>
 
       {/* Subtext */}
-      <span className="mt-3 text-xs md:text-sm font-semibold tracking-wide text-foreground/80 transition-all">
+      <span className="text-foreground/80 mt-3 text-xs font-semibold tracking-wide transition-all md:text-sm">
         {subtext}
       </span>
     </div>

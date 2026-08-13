@@ -1,5 +1,5 @@
-import { ArogyaSaathiHero } from '@/components/app/arogyaasaathi-hero';
 import { ArogyaSaathiHealthDisclaimer } from '@/components/app/arogyaasaathi-health-disclaimer';
+import { ArogyaSaathiHero } from '@/components/app/arogyaasaathi-hero';
 
 interface WelcomeViewProps {
   startButtonText: string;
@@ -18,11 +18,11 @@ export const WelcomeView = ({
   return (
     <div ref={ref} className="relative min-h-screen w-full overflow-x-hidden pt-6">
       {/* Full-Screen Image 3 Background (Clearly Visible) */}
-      <div className="fixed inset-0 -z-20 w-full h-full overflow-hidden">
+      <div className="fixed inset-0 -z-20 h-full w-full overflow-hidden">
         <img
           src="/images/arogyasaathi_bg.jpg"
           alt="ArogyaSaathi Health Companion"
-          className="w-full h-full object-cover scale-102 filter brightness-105"
+          className="h-full w-full scale-102 object-cover brightness-105 filter"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/40" />
       </div>
@@ -36,12 +36,11 @@ export const WelcomeView = ({
 
       <ArogyaSaathiHealthDisclaimer />
 
-      <div className="relative py-6 flex w-full items-center justify-center">
-        <p className="text-white/80 max-w-prose text-xs md:text-sm font-medium text-center backdrop-blur-md px-4 py-1.5 rounded-full bg-black/40 border border-white/10">
+      <div className="relative flex w-full items-center justify-center py-6">
+        <p className="max-w-prose rounded-full border border-white/10 bg-black/40 px-4 py-1.5 text-center text-xs font-medium text-white/80 backdrop-blur-md md:text-sm">
           Designed for Bharat 🇮🇳 • Simple conversations • Local language voice AI
         </p>
       </div>
     </div>
   );
 };
-

@@ -71,18 +71,22 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           enableSystem
           disableTransitionOnChange
         >
-          <header className="fixed top-0 left-0 z-50 hidden w-full flex-row justify-between items-center p-6 md:flex pointer-events-none">
+          <header className="pointer-events-none fixed top-0 left-0 z-50 hidden w-full flex-row items-center justify-between p-6 md:flex">
             <div className="pointer-events-auto flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logo} alt={`${companyName} Logo`} className="h-12 md:h-14 w-auto object-contain drop-shadow-lg hover:scale-105 transition-transform duration-300" />
+              <img
+                src={logo}
+                alt={`${companyName} Logo`}
+                className="h-12 w-auto object-contain drop-shadow-lg transition-transform duration-300 hover:scale-105 md:h-14"
+              />
             </div>
-            <span className="pointer-events-auto text-muted-foreground font-mono text-xs font-semibold tracking-wider uppercase bg-card/60 border border-border/40 backdrop-blur-md px-3 py-1.5 rounded-full">
+            <span className="text-muted-foreground bg-card/60 border-border/40 pointer-events-auto rounded-full border px-3 py-1.5 font-mono text-xs font-semibold tracking-wider uppercase backdrop-blur-md">
               Built with{' '}
               <a
                 target="_blank"
                 rel="noopener noreferrer"
                 href="https://docs.livekit.io/agents"
-                className="underline underline-offset-4 text-teal-400"
+                className="text-teal-400 underline underline-offset-4"
               >
                 LiveKit Agents
               </a>

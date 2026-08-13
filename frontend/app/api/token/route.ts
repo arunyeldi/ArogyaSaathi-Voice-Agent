@@ -43,11 +43,13 @@ export async function POST(req: Request) {
         { ignoreUnknownFields: true }
       );
     }
-      
+
     // Generate participant token with stable user identity support
     const participantName = body?.user_name || 'user';
     const userId = body?.user_id || body?.userId;
-    const participantIdentity = userId ? String(userId) : `arogya_user_${Math.floor(Math.random() * 10_000)}`;
+    const participantIdentity = userId
+      ? String(userId)
+      : `arogya_user_${Math.floor(Math.random() * 10_000)}`;
     const roomName = `arogya_room_${Math.floor(Math.random() * 10_000)}`;
 
     const participantToken = await createParticipantToken(

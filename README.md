@@ -301,6 +301,93 @@ flowchart TD
 
 ---
 
+## Day 6 – Outbound Calls
+
+ArogyaSaathi incorporates **Day 6 — Proactive Outbound Calling** for vaccination follow-up reminders.
+
+### Outbound Use Case
+Proactively calls users with vaccination follow-up reminders, allowing callers to confirm reminder details, ask general health questions within approved safety guardrails, or permanently opt out of future calls.
+
+### 3-Concept Mandatory Opening
+Every outbound call begins with a mandatory 3-concept opening in the first two sentences:
+1. **WHO**: *"Hello, I'm ArogyaSaathi, an AI health assistant."*
+2. **WHY**: *"I'm calling with a vaccination follow-up reminder."*
+3. **HOW TO STOP**: *"If you don't want future reminder calls, just say 'stop' at any time."*
+
+### Opt-Out & Persistent Blocking
+- When a user says *"stop"*, *"don't call me"*, *"unsubscribe"*, or *"not interested"*, the agent registers an immediate opt-out (`register_opt_out`).
+- The opt-out status is stored in SQLite (`phone_opt_outs` table).
+- Any future outbound call attempt to an opted-out phone number is automatically **BLOCKED** (`status: "opted_out"`).
+
+### Advanced Call Outcome Handling & Retry Policy
+- **Tracked Call States**: `initiated`, `ringing`, `answered`, `completed`, `no_answer`, `busy`, `voicemail`, `hangup`, `failed`, `opted_out`.
+- **Controlled Retry Policy**: `no_answer` and `busy` statuses are capped at **maximum 1 retry** to prevent endless redialing.
+- **Voicemail Privacy**: If an answering machine is detected, a minimal non-sensitive message is left: *"Hello, this is ArogyaSaathi calling with a health reminder. Please contact your local healthcare provider when convenient. Thank you."* (Zero medical details, diagnoses, or symptoms disclosed).
+
+### Required Environment Variables
+
+```env
+# Telephony Integration (Twilio / LiveKit SIP)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=+1XXXXXXXXXX
+
+# Demo & Security Restrictions
+OUTBOUND_TEST_PHONE_NUMBER=+91XXXXXXXXXX
+OUTBOUND_DEMO_MODE=true
+```
+
+> *Note: This prototype makes outbound calls only to authorized test numbers controlled by the developer.*
+
+### Outbound Architecture Diagram
+
+```mermaid
+flowchart TD
+    Trigger[User / Frontend Trigger Card] -->|POST /api/outbound-call| API[Next.js API Route / REST Endpoint]
+    API -->|Validation & DB Opt-Out Check| TelephonyService[OutboundTelephonyService]
+    TelephonyService <-->|Check / Persist Opt-Out| DB[(SQLite DB arogyasaathi.db)]
+    
+    TelephonyService -->|Twilio / LiveKit SIP Outbound Call| Phone[User Phone Ringing]
+    Phone -->|Call Answered| Room[LiveKit Telephony Room]
+    
+    Room -->|3-Concept Mandatory Intro| Agent[ArogyaSaathi Agent]
+    Agent -->|Opt-Out Tool / Triage Tool| Tools[register_opt_out / assess_symptom_urgency]
+    Tools <-->|Update State| DB
+    
+    Agent -->|Natural Voice Output| TTS[Murf Falcon TTS Anisha]
+    TTS -->|Speech Audio Stream| Phone
+
+    style Trigger fill:#0284c7,stroke:#38bdf8,color:#fff
+    style API fill:#4338ca,stroke:#818cf8,color:#fff
+    style TelephonyService fill:#b45309,stroke:#fbbf24,color:#fff
+    style DB fill:#374151,stroke:#9ca3af,color:#fff
+    style Phone fill:#059669,stroke:#34d399,color:#fff
+    style Room fill:#0f766e,stroke:#2dd4bf,color:#fff
+    style Agent fill:#6b21a8,stroke:#c084fc,color:#fff
+    style Tools fill:#d97706,stroke:#fcd34d,color:#fff
+    style TTS fill:#047857,stroke:#34d399,color:#fff
+```
+
+---
+
+## 🛡️ Day 7 — Know When to Ask for Human Help (Human Escalation System)
+
+ArogyaSaathi enforces strict healthcare AI safety boundaries. It knows **when it can help**, **when it needs to stop**, **when it requires caller permission**, and **when to hand over responsibly to a human healthcare professional**.
+
+### Key Escalation Triggers:
+1. **Condition A — Red-Flag Symptoms**: Severe difficulty breathing, chest pain, loss of consciousness, severe bleeding, or sudden neurological symptoms.
+2. **Condition B — Diagnosis & Prescription Requests**: Requests like *"Do I have pneumonia?"*, *"Which medicine should I take?"*, *"What dosage do I need?"*, *"Should I stop my prescribed medicine?"*.
+3. **Selective Decision Boundary**: Normal health education questions (*"What are healthy foods?"*, *"Why do people get fever?"*) do **NOT** trigger escalation.
+
+### Architecture & Safety Protocol:
+- **Mandatory Consent Flow**: The agent explains why escalation is needed, what info will be shared, and asks for permission. If the user declines, the request is **cancelled** and no data is stored.
+- **Privacy Sanitization**: Deterministic sanitization strips credentials (OTPs, PINs, bank accounts, Aadhaar, SSN) before database persistence.
+- **Reference ID & Urgency**: Generates collision-safe reference IDs (`AS-2026-1042`) and assigns urgency levels (`EMERGENCY`, `HIGH`, `MEDIUM`, `LOW`).
+- **Duplicate Prevention**: If an open ticket already exists for the user and reason, the existing ticket is updated and its Reference ID is returned.
+- **Human Support Dashboard**: Dedicated Next.js support center for operators to view tickets, update status (`OPEN` ➔ `IN_PROGRESS` ➔ `RESOLVED`), and trigger **Day 6 Resolution Callbacks**.
+
+---
+
 ## Project Structure
 
 ```

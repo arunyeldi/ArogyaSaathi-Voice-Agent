@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRoomContext } from '@livekit/components-react';
 import { RoomEvent } from 'livekit-client';
-import { AnimatePresence, motion } from 'motion/react';
 import { Activity, AlertTriangle, CheckCircle2, ShieldAlert, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useRoomContext } from '@livekit/components-react';
 
 export interface ToolDataPayload {
   status?: string;
@@ -19,7 +19,9 @@ export interface ToolDataPayload {
 
 export function ArogyaSaathiToolResultCard() {
   const room = useRoomContext();
-  const [toolState, setToolState] = useState<'IDLE' | 'CHECKING' | 'SUCCESS' | 'UNAVAILABLE' | 'ERROR'>('IDLE');
+  const [toolState, setToolState] = useState<
+    'IDLE' | 'CHECKING' | 'SUCCESS' | 'UNAVAILABLE' | 'ERROR'
+  >('IDLE');
   const [toolData, setToolData] = useState<ToolDataPayload | null>(null);
 
   useEffect(() => {
@@ -69,35 +71,40 @@ export function ArogyaSaathiToolResultCard() {
           label: 'EMERGENCY CARE REQUIRED',
           Icon: ShieldAlert,
           bg: 'bg-rose-600 text-white border-rose-700',
-          cardBg: 'bg-rose-50/95 border-rose-300 dark:bg-rose-950/90 dark:border-rose-800 text-rose-950 dark:text-rose-100',
+          cardBg:
+            'bg-rose-50/95 border-rose-300 dark:bg-rose-950/90 dark:border-rose-800 text-rose-950 dark:text-rose-100',
         };
       case 'URGENT':
         return {
           label: 'URGENT MEDICAL ASSESSMENT',
           Icon: AlertTriangle,
           bg: 'bg-orange-500 text-white border-orange-600',
-          cardBg: 'bg-orange-50/95 border-orange-300 dark:bg-orange-950/90 dark:border-orange-800 text-orange-950 dark:text-orange-100',
+          cardBg:
+            'bg-orange-50/95 border-orange-300 dark:bg-orange-950/90 dark:border-orange-800 text-orange-950 dark:text-orange-100',
         };
       case 'SOON':
         return {
           label: 'MEDICAL CONSULTATION SOON',
           Icon: Activity,
           bg: 'bg-amber-500 text-white border-amber-600',
-          cardBg: 'bg-amber-50/95 border-amber-300 dark:bg-amber-950/90 dark:border-amber-800 text-amber-950 dark:text-amber-100',
+          cardBg:
+            'bg-amber-50/95 border-amber-300 dark:bg-amber-950/90 dark:border-amber-800 text-amber-950 dark:text-amber-100',
         };
       case 'UNAVAILABLE':
         return {
           label: 'SERVICE TEMPORARILY UNAVAILABLE',
           Icon: AlertTriangle,
           bg: 'bg-slate-600 text-white border-slate-700',
-          cardBg: 'bg-slate-50/95 border-slate-300 dark:bg-slate-900/90 dark:border-slate-800 text-slate-900 dark:text-slate-100',
+          cardBg:
+            'bg-slate-50/95 border-slate-300 dark:bg-slate-900/90 dark:border-slate-800 text-slate-900 dark:text-slate-100',
         };
       default:
         return {
           label: 'ROUTINE CARE / SELF CARE',
           Icon: CheckCircle2,
           bg: 'bg-emerald-600 text-white border-emerald-700',
-          cardBg: 'bg-emerald-50/95 border-emerald-300 dark:bg-emerald-950/90 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100',
+          cardBg:
+            'bg-emerald-50/95 border-emerald-300 dark:bg-emerald-950/90 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100',
         };
     }
   })();
@@ -111,12 +118,14 @@ export function ArogyaSaathiToolResultCard() {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="w-full max-w-md mx-auto my-3 z-30"
+        className="z-30 mx-auto my-3 w-full max-w-md"
       >
-        <div className={`relative rounded-2xl border p-4 shadow-xl backdrop-blur-md transition-all ${cardBg}`}>
+        <div
+          className={`relative rounded-2xl border p-4 shadow-xl backdrop-blur-md transition-all ${cardBg}`}
+        >
           <button
             onClick={() => setToolState('IDLE')}
-            className="absolute top-3 right-3 p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+            className="absolute top-3 right-3 rounded-full p-1 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
             aria-label="Dismiss guidance card"
           >
             <X className="size-4" />
@@ -124,7 +133,7 @@ export function ArogyaSaathiToolResultCard() {
 
           {toolState === 'CHECKING' ? (
             <div className="flex items-center gap-3 py-2">
-              <Activity className="size-5 text-teal-600 dark:text-teal-400 animate-spin" />
+              <Activity className="size-5 animate-spin text-teal-600 dark:text-teal-400" />
               <div>
                 <p className="text-sm font-semibold text-teal-950 dark:text-teal-100">
                   Checking health guidance...
@@ -140,7 +149,9 @@ export function ArogyaSaathiToolResultCard() {
                 <span className="text-[11px] font-bold tracking-wider uppercase opacity-75">
                   HEALTH GUIDANCE
                 </span>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase border shadow-xs ${badgeBg}`}>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase shadow-xs ${badgeBg}`}
+                >
                   <Icon className="size-3" />
                   {badgeLabel}
                 </span>
@@ -149,28 +160,31 @@ export function ArogyaSaathiToolResultCard() {
               {toolData?.reason && (
                 <div>
                   <h4 className="text-xs font-semibold uppercase opacity-70">Reason</h4>
-                  <p className="text-xs md:text-sm font-medium mt-0.5 leading-snug">
+                  <p className="mt-0.5 text-xs leading-snug font-medium md:text-sm">
                     {toolData.reason}
                   </p>
                 </div>
               )}
 
               {toolData?.recommended_action && (
-                <div className="rounded-lg bg-white/60 dark:bg-black/40 p-2.5 border border-black/5 dark:border-white/10">
-                  <h4 className="text-xs font-bold uppercase opacity-80 text-teal-700 dark:text-teal-300">
+                <div className="rounded-lg border border-black/5 bg-white/60 p-2.5 dark:border-white/10 dark:bg-black/40">
+                  <h4 className="text-xs font-bold text-teal-700 uppercase opacity-80 dark:text-teal-300">
                     Recommended Next Step
                   </h4>
-                  <p className="text-xs md:text-sm font-semibold mt-0.5 leading-snug">
+                  <p className="mt-0.5 text-xs leading-snug font-semibold md:text-sm">
                     {toolData.recommended_action}
                   </p>
                 </div>
               )}
 
-              <div className="flex items-center justify-between text-[10px] opacity-60 border-t border-black/5 dark:border-white/10 pt-2">
+              <div className="flex items-center justify-between border-t border-black/5 pt-2 text-[10px] opacity-60 dark:border-white/10">
                 <span>Source: {toolData?.source || 'ArogyaSaathi local rules'}</span>
                 <span>
                   {toolData?.data_as_of
-                    ? new Date(toolData.data_as_of).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    ? new Date(toolData.data_as_of).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : 'Just now'}
                 </span>
               </div>

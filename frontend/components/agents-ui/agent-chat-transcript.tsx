@@ -64,12 +64,24 @@ export function AgentChatTranscript({
 
           return (
             <Message key={id} title={timeString} from={messageOrigin} className="my-2">
-              <div className={`mb-1 text-xs font-bold tracking-wide flex items-center gap-1.5 ${isUser ? 'justify-end text-teal-600 dark:text-teal-400' : 'justify-start text-emerald-600 dark:text-emerald-400'}`}>
-                {!isUser && <span className="size-2 rounded-full bg-emerald-500 inline-block animate-pulse" />}
+              <div
+                className={`mb-1 flex items-center gap-1.5 text-xs font-bold tracking-wide ${isUser ? 'justify-end text-teal-600 dark:text-teal-400' : 'justify-start text-emerald-600 dark:text-emerald-400'}`}
+              >
+                {!isUser && (
+                  <span className="inline-block size-2 animate-pulse rounded-full bg-emerald-500" />
+                )}
                 <span>{isUser ? 'You' : 'ArogyaSaathi'}</span>
-                <span className="text-[10px] font-normal text-muted-foreground">({timeString})</span>
+                <span className="text-muted-foreground text-[10px] font-normal">
+                  ({timeString})
+                </span>
               </div>
-              <MessageContent className={isUser ? 'bg-muted/60 dark:bg-muted/40 border-0 rounded-2xl px-4 py-2.5 text-foreground max-w-[85%]' : 'bg-transparent border-0 p-0 text-foreground/95 leading-relaxed text-sm md:text-base max-w-full font-normal'}>
+              <MessageContent
+                className={
+                  isUser
+                    ? 'bg-muted/60 dark:bg-muted/40 text-foreground max-w-[85%] rounded-2xl border-0 px-4 py-2.5'
+                    : 'text-foreground/95 max-w-full border-0 bg-transparent p-0 text-sm leading-relaxed font-normal md:text-base'
+                }
+              >
                 <MessageResponse>{message}</MessageResponse>
               </MessageContent>
             </Message>
