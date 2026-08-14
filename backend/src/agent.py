@@ -18,6 +18,7 @@ from livekit.agents import (
     WorkerOptions,
     cli,
     function_tool,
+    llm,
     tokenize,
 )
 from livekit.plugins import deepgram, google, murf, silero
@@ -447,6 +448,19 @@ class Assistant(Agent):
 
         return f"ESCALATION ERROR: {message}"
 
+
+def sanitize_chat_context(chat_ctx: llm.ChatContext):
+    """Sanitize ChatContext by removing internal raw function call/result items that lack Gemini thought signatures."""
+    if not chat_ctx or not hasattr(chat_ctx, "_items"):
+        return
+    chat_ctx._items = [
+        item
+        for item in chat_ctx._items
+        if not isinstance(
+            item, (llm.FunctionCall, llm.FunctionCallOutput, llm.FunctionCallResult)
+        )
+    ]
+
     @function_tool
     async def transfer_to_clinic_specialist(
         self,
@@ -492,6 +506,8 @@ class Assistant(Agent):
                     "I will connect you to our Clinic and Appointment Specialist who can help you find nearby doctors and book your visit.",
                     add_to_chat_ctx=True,
                 )
+                if hasattr(context.session, "chat_ctx"):
+                    sanitize_chat_context(context.session.chat_ctx)
                 context.session.update_agent(specialist)
 
                 intro = (
@@ -617,6 +633,8 @@ class ClinicAppointmentSpecialist(Agent):
                     "I am transferring you back to your Main ArogyaSaathi Health Companion. Thank you!",
                     add_to_chat_ctx=True,
                 )
+                if hasattr(context.session, "chat_ctx"):
+                    sanitize_chat_context(context.session.chat_ctx)
                 context.session.update_agent(self.main_agent)
                 return "HANDOFF BACK SUCCESSFUL: Switched active agent back to Main Health Companion."
             except Exception as e:

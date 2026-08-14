@@ -1,6 +1,5 @@
 """Automated test suite for Day 9 Specialist Agent Handoff logic."""
 
-
 import pytest
 
 from agent import Assistant, CallTracker, ClinicAppointmentSpecialist
