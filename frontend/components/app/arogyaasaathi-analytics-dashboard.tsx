@@ -62,25 +62,27 @@ export function ArogyaSaathiAnalyticsDashboard() {
     try {
       setRefreshing(true);
       // 1. Fetch summary
-      const sumRes = await fetch('/api/analytics?action=summary', { cache: 'no-store' });
-      if (sumRes.ok) {
-        const sumData = await sumRes.json();
-        if (sumData.success) {
+      const sumRes = await fetch('/api/analytics?action=summary', {
+        cache: 'no-store',
+      }).catch(() => null);
+      if (sumRes && sumRes.ok) {
+        const sumData = await sumRes.json().catch(() => null);
+        if (sumData && sumData.success) {
           setSummary(sumData.summary);
         }
       }
 
       // 2. Fetch calls
       const callsUrl = `/api/analytics?action=calls&channel=${channelFilter}&outcome=${outcomeFilter}&limit=25`;
-      const callsRes = await fetch(callsUrl, { cache: 'no-store' });
-      if (callsRes.ok) {
-        const callsData = await callsRes.json();
-        if (callsData.success) {
+      const callsRes = await fetch(callsUrl, { cache: 'no-store' }).catch(() => null);
+      if (callsRes && callsRes.ok) {
+        const callsData = await callsRes.json().catch(() => null);
+        if (callsData && callsData.success) {
           setCalls(callsData.calls || []);
         }
       }
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err);
+    } catch {
+      // Quietly ignore transient network failures during server restarts
     } finally {
       setLoading(false);
       setRefreshing(false);
