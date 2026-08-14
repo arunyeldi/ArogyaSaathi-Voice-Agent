@@ -25,9 +25,13 @@ from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 from memory.service import MemoryService
 from outbound_api import create_app
+from prompts.specialist_instructions import SPECIALIST_SYSTEM_PROMPT
 from prompts.system_prompt import SYSTEM_PROMPT
+from tools.clinic_booking import (
+    book_clinic_appointment_local,
+    search_nearby_clinics_local,
+)
 from tools.symptom_triage import assess_symptom_urgency_local
-
 
 logger = logging.getLogger("agent")
 
@@ -36,8 +40,10 @@ load_dotenv(".env.local")
 # Initialize SQLite Database & Memory Service
 MemoryService.initialize()
 
+
 def _ensure_api_server_running():
     """Start the REST API HTTP server (port 8088) in a background thread if not already running."""
+
     def run_server():
         try:
             app = create_app()
@@ -50,13 +56,16 @@ def _ensure_api_server_running():
             site = web.TCPSite(runner, "127.0.0.1", 8088)
             loop.run_until_complete(site.start())
             logger.info("ArogyaSaathi REST API server active on http://127.0.0.1:8088")
-            print("[REST_API] ArogyaSaathi REST API server active on http://127.0.0.1:8088")
+            print(
+                "[REST_API] ArogyaSaathi REST API server active on http://127.0.0.1:8088"
+            )
             loop.run_forever()
         except Exception as e:
             logger.info(f"API server thread notice (may already be running): {e}")
 
     t = threading.Thread(target=run_server, daemon=True)
     t.start()
+
 
 _ensure_api_server_running()
 
@@ -99,6 +108,10 @@ class CallTracker:
             "lookup_user",
             "save_user_memory",
             "create_escalation",
+            "search_nearby_clinics",
+            "book_clinic_appointment",
+            "transfer_to_clinic_specialist",
+            "transfer_back_to_main_agent",
         ]:
             self.guidance_provided = True
 
@@ -434,6 +447,184 @@ class Assistant(Agent):
 
         return f"ESCALATION ERROR: {message}"
 
+    @function_tool
+    async def transfer_to_clinic_specialist(
+        self,
+        context: RunContext,
+        reason: str,
+        caller_name: str | None = None,
+        location_or_city: str | None = None,
+        symptoms_or_specialty: str | None = None,
+    ) -> str:
+        """Transfer the conversation to the Clinic and Appointment Booking Specialist Agent (Day 9).
+
+        WHEN TO CALL: Call this tool IMMEDIATELY whenever the caller asks to book a doctor appointment,
+        find a nearby clinic or Primary Health Center (PHC), schedule a consultation, check doctor availability, or visit a hospital.
+
+        Args:
+            reason: Why handoff is needed (e.g. 'Caller wants to book a clinic consultation for fever').
+            caller_name: The caller's name if known.
+            location_or_city: The caller's city or area if known (e.g. 'Hyderabad', 'Delhi').
+            symptoms_or_specialty: Symptoms or doctor specialty requested (e.g. 'General Physician', 'Pediatrics').
+        """
+        logger.info(
+            f"[HANDOFF] Transfer to Clinic Specialist requested - Reason: '{reason}', Name: '{caller_name}', Location: '{location_or_city}'"
+        )
+        if self.tracker:
+            self.tracker.record_tool("transfer_to_clinic_specialist")
+
+        try:
+            specialist = ClinicAppointmentSpecialist(
+                room=self.room,
+                tracker=self.tracker,
+                main_agent=self,
+                context_data={
+                    "caller_name": caller_name,
+                    "location": location_or_city,
+                    "specialty": symptoms_or_specialty,
+                    "reason": reason,
+                },
+            )
+
+            if context.session:
+                # Step 5 Announcement: Tell the user BEFORE switching
+                await context.session.say(
+                    "I will connect you to our Clinic and Appointment Specialist who can help you find nearby doctors and book your visit.",
+                    add_to_chat_ctx=True,
+                )
+                context.session.update_agent(specialist)
+
+                intro = (
+                    "Namaste! I am your ArogyaSaathi Clinic & Appointment Specialist. "
+                )
+                if caller_name:
+                    intro += (
+                        f"I see you are looking for a consultation for {caller_name}. "
+                    )
+                intro += "How can I help you find a clinic or book an appointment slot today?"
+
+                await context.session.say(intro, add_to_chat_ctx=True)
+
+            return (
+                f"HANDOFF SUCCESSFUL: Connected to Clinic & Appointment Specialist. "
+                f"Context passed - Caller: '{caller_name or 'Unspecified'}', Location: '{location_or_city or 'General'}', Specialty: '{symptoms_or_specialty or 'General'}'. "
+                f"DO NOT repeat asking questions already answered."
+            )
+        except Exception as e:
+            logger.error(f"[HANDOFF_ERROR] Failed handoff: {e}")
+            return (
+                f"HANDOFF NOTICE: The specialist service is currently unavailable ({e}). "
+                f"I will continue assisting you directly as your main health agent."
+            )
+
+
+class ClinicAppointmentSpecialist(Agent):
+    """Specialist Agent for Clinic Search & Doctor Appointment Booking (Day 9)."""
+
+    def __init__(
+        self,
+        room: rtc.Room | None = None,
+        tracker: CallTracker | None = None,
+        main_agent: Agent | None = None,
+        context_data: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(instructions=SPECIALIST_SYSTEM_PROMPT)
+        self.room = room
+        self.tracker = tracker
+        self.main_agent = main_agent
+        self.context_data = context_data or {}
+
+    @function_tool
+    async def search_nearby_clinics(
+        self,
+        context: RunContext,
+        location: str | None = None,
+        specialty: str | None = None,
+    ) -> str:
+        """Search for nearby Primary Health Centers (PHCs), clinics, and doctor availability slots."""
+        search_loc = location or self.context_data.get("location")
+        search_spec = specialty or self.context_data.get("specialty")
+        logger.info(
+            f"[SPECIALIST_TOOL] search_nearby_clinics - Location: '{search_loc}', Specialty: '{search_spec}'"
+        )
+        if self.tracker:
+            self.tracker.record_tool("search_nearby_clinics")
+
+        res = search_nearby_clinics_local(location=search_loc, specialty=search_spec)
+        clinics = res.get("clinics", [])
+        output = [f"FOUND {len(clinics)} CLINIC(S) NEAR {search_loc or 'your area'}:"]
+        for c in clinics:
+            docs_str = ", ".join(
+                [f"{d['name']} ({d['specialty']})" for d in c["available_doctors"]]
+            )
+            output.append(
+                f"• {c['clinic_name']} ({c['address']})\n  Timings: {c['timings']}\n  Available Doctors: {docs_str}"
+            )
+        return "\n".join(output)
+
+    @function_tool
+    async def book_clinic_appointment(
+        self,
+        context: RunContext,
+        patient_name: str,
+        clinic_name: str,
+        doctor_specialty: str,
+        appointment_time: str,
+        symptom_notes: str = "",
+    ) -> str:
+        """Book a doctor appointment at a clinic and return confirmation reference details."""
+        name = patient_name or self.context_data.get("caller_name") or "Patient"
+        logger.info(
+            f"[SPECIALIST_TOOL] book_clinic_appointment - Patient: '{name}', Clinic: '{clinic_name}', Time: '{appointment_time}'"
+        )
+        if self.tracker:
+            self.tracker.record_tool("book_clinic_appointment")
+
+        res = book_clinic_appointment_local(
+            patient_name=name,
+            clinic_name=clinic_name,
+            doctor_specialty=doctor_specialty,
+            appointment_time=appointment_time,
+            symptom_notes=symptom_notes,
+        )
+
+        return (
+            f"APPOINTMENT BOOKED SUCCESSFULLY:\n"
+            f"Booking Reference ID: {res.get('booking_id')}\n"
+            f"Patient Name: {name}\n"
+            f"Clinic Name: {clinic_name}\n"
+            f"Doctor Specialty: {doctor_specialty}\n"
+            f"Scheduled Time: {appointment_time}\n"
+            f"Instructions: {res.get('instructions')}"
+        )
+
+    @function_tool
+    async def transfer_back_to_main_agent(
+        self,
+        context: RunContext,
+        reason: str = "Clinic appointment work completed",
+    ) -> str:
+        """Hand the conversation back to the Main ArogyaSaathi Agent after appointment work is complete or if non-clinic health queries are asked."""
+        logger.info(
+            f"[SPECIALIST_HANDOFF_BACK] Transferring back to main agent - Reason: '{reason}'"
+        )
+        if self.tracker:
+            self.tracker.record_tool("transfer_back_to_main_agent")
+
+        if context.session and self.main_agent:
+            try:
+                await context.session.say(
+                    "I am transferring you back to your Main ArogyaSaathi Health Companion. Thank you!",
+                    add_to_chat_ctx=True,
+                )
+                context.session.update_agent(self.main_agent)
+                return "HANDOFF BACK SUCCESSFUL: Switched active agent back to Main Health Companion."
+            except Exception as e:
+                logger.error(f"[HANDOFF_BACK_ERROR] Failed to switch agent: {e}")
+                return f"HANDOFF NOTICE: Returning to main conversation ({e})"
+
+        return "HANDOFF BACK COMPLETED."
+
 
 def prewarm(proc: JobProcess):
     proc.userdata["vad"] = silero.VAD.load()
@@ -449,7 +640,7 @@ async def my_agent(ctx: JobContext):
         raise RuntimeError("GOOGLE_API_KEY is missing from .env.local")
 
     llm_engine = google.LLM(
-        model="gemini-3.5-flash",
+        model="gemini-flash-latest",
         api_key=google_key,
     )
 

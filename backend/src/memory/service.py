@@ -5,12 +5,14 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from .database import (
+    db_book_clinic_appointment,
     db_delete_user,
     db_find_open_escalation,
     db_get_call_analytics_summary,
     db_get_call_info,
     db_get_escalation,
     db_is_phone_opted_out,
+    db_list_clinic_appointments,
     db_list_escalations,
     db_list_recent_calls,
     db_lookup_user,
@@ -360,3 +362,25 @@ class MemoryService:
     ) -> list[dict[str, Any]]:
         """List recent calls for Day 8 Call Analytics Dashboard."""
         return db_list_recent_calls(limit=limit, channel=channel, outcome=outcome)
+
+    @staticmethod
+    def book_clinic_appointment(
+        patient_name: str,
+        clinic_name: str,
+        doctor_specialty: str,
+        appointment_time: str,
+        symptom_notes: str = "",
+    ) -> dict[str, Any]:
+        """Book a clinic appointment consultation."""
+        return db_book_clinic_appointment(
+            patient_name=patient_name,
+            clinic_name=clinic_name,
+            doctor_specialty=doctor_specialty,
+            appointment_time=appointment_time,
+            symptom_notes=symptom_notes,
+        )
+
+    @staticmethod
+    def list_clinic_appointments(limit: int = 10) -> list[dict[str, Any]]:
+        """Retrieve recent clinic appointments."""
+        return db_list_clinic_appointments(limit=limit)

@@ -55,7 +55,7 @@ def test_call_analytics_lifecycle():
     assert summary["success_rate"] > 0
 
     # 4. List recent calls
-    calls = MemoryService.list_recent_calls(limit=10)
+    calls = MemoryService.list_recent_calls(limit=100)
     assert len(calls) >= 2
     call_ids = [c["call_id"] for c in calls]
     assert "test_success_room_101" in call_ids

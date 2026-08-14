@@ -1,6 +1,7 @@
 import json
 import logging
 import sqlite3
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -92,6 +93,20 @@ def init_db() -> None:
                     outcome_reason TEXT,
                     tools_used TEXT DEFAULT '[]',
                     triage_level TEXT DEFAULT 'NONE',
+                    created_at TEXT NOT NULL
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS clinic_appointments (
+                    booking_id TEXT PRIMARY KEY,
+                    patient_name TEXT NOT NULL,
+                    clinic_name TEXT NOT NULL,
+                    doctor_specialty TEXT NOT NULL,
+                    appointment_time TEXT NOT NULL,
+                    symptom_notes TEXT,
+                    status TEXT DEFAULT 'confirmed',
                     created_at TEXT NOT NULL
                 )
                 """
@@ -643,4 +658,74 @@ def db_list_recent_calls(
             return results
     except Exception as e:
         logger.error(f"Database error listing recent calls: {e}")
+        return []
+
+
+def db_book_clinic_appointment(
+    patient_name: str,
+    clinic_name: str,
+    doctor_specialty: str,
+    appointment_time: str,
+    symptom_notes: str = "",
+) -> dict[str, Any]:
+    """Persist a clinic appointment booking record in SQLite."""
+    now_str = datetime.now(timezone.utc).isoformat()
+    booking_id = f"APT-2026-{int(time.time() * 1000) % 100000:05d}"
+    try:
+        with get_db_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO clinic_appointments (
+                    booking_id, patient_name, clinic_name, doctor_specialty,
+                    appointment_time, symptom_notes, status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, 'confirmed', ?)
+                """,
+                (
+                    booking_id,
+                    patient_name,
+                    clinic_name,
+                    doctor_specialty,
+                    appointment_time,
+                    symptom_notes,
+                    now_str,
+                ),
+            )
+            conn.commit()
+            logger.info(
+                f"[CLINIC_DB] Booked appointment '{booking_id}' for '{patient_name}' at '{clinic_name}'"
+            )
+            return {
+                "booking_id": booking_id,
+                "patient_name": patient_name,
+                "clinic_name": clinic_name,
+                "doctor_specialty": doctor_specialty,
+                "appointment_time": appointment_time,
+                "symptom_notes": symptom_notes,
+                "status": "confirmed",
+                "created_at": now_str,
+            }
+    except Exception as e:
+        logger.error(f"Error booking clinic appointment in DB: {e}")
+        return {
+            "booking_id": booking_id,
+            "patient_name": patient_name,
+            "clinic_name": clinic_name,
+            "doctor_specialty": doctor_specialty,
+            "appointment_time": appointment_time,
+            "status": "error",
+            "error": str(e),
+        }
+
+
+def db_list_clinic_appointments(limit: int = 10) -> list[dict[str, Any]]:
+    """Retrieve recent clinic appointments."""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.execute(
+                "SELECT * FROM clinic_appointments ORDER BY created_at DESC LIMIT ?",
+                (limit,),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+    except Exception as e:
+        logger.error(f"Error listing clinic appointments: {e}")
         return []
